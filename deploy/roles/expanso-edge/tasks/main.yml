@@ -1,0 +1,136 @@
+# Install and run the Expanso Edge agent, the Jetpack-native way.
+# Every step is idempotent and safe to re-run.
+#
+# Privilege escalation is controlled by the PLAY, not the role:
+#   - root-accessed nodes (provisioned LXC) -> play sets no sudo
+#   - normal-user targets                   -> play sets `sudo: root`
+# This keeps the role usable on minimal images that don't ship a `sudo` binary.
+
+# --- 1. detect platform ------------------------------------------------------
+
+- !facts
+  {}
+
+- !echo
+  msg: "Deploying Expanso Edge {{ expanso_edge_version }} ({{ expanso_edge_channel }}) on {{ jet_os_flavor }}/{{ jet_arch }}"
+
+# Map `uname -m` to the artifact arch slug.
+- !set
+  vars:
+    expanso_arch: amd64
+  with:
+    condition: (eq jet_arch "x86_64")
+
+- !set
+  vars:
+    expanso_arch: arm64
+  with:
+    condition: (eq jet_arch "aarch64")
+
+# --- prerequisites -----------------------------------------------------------
+# Minimal images often ship without curl (which !download needs) or
+# ca-certificates (needed for the HTTPS fetch). Install them up front.
+
+- !apt
+  name: Ensure curl (Debian/Ubuntu)
+  package: curl
+  update: true
+  with:
+    condition: (eq jet_os_flavor "Debian")
+
+- !apt
+  name: Ensure ca-certificates (Debian/Ubuntu)
+  package: ca-certificates
+  with:
+    condition: (eq jet_os_flavor "Debian")
+
+- !dnf
+  name: Ensure curl (EL)
+  package: curl
+  with:
+    condition: (eq jet_os_flavor "EL")
+
+# --- 2. directories ----------------------------------------------------------
+
+- !directory
+  name: Versioned release directory
+  path: "{{ expanso_releases_dir }}/{{ expanso_edge_version }}"
+  attributes:
+    owner: root
+    group: root
+    mode: 0o755
+
+# --- 3. fetch + unpack the agent --------------------------------------------
+# Artifact layout (from the get.expanso.io resolve API):
+#   <base>/<channel>/<version>/expanso-edge_<version>_linux_<arch>.tar.gz
+# The tarball contains a single `expanso-edge` binary.
+
+- !download
+  name: Download expanso-edge {{ expanso_edge_version }} ({{ expanso_arch }})
+  url: "{{ expanso_edge_download_base }}/{{ expanso_edge_channel }}/{{ expanso_edge_version }}/expanso-edge_{{ expanso_edge_version }}_linux_{{ expanso_arch }}.tar.gz"
+  dest: "{{ expanso_releases_dir }}/{{ expanso_edge_version }}/expanso-edge.tar.gz"
+  with:
+    skip_if_exists: "{{ expanso_releases_dir }}/{{ expanso_edge_version }}/expanso-edge.tar.gz"
+
+- !unpack
+  name: Extract the expanso-edge binary
+  src: "{{ expanso_releases_dir }}/{{ expanso_edge_version }}/expanso-edge.tar.gz"
+  dest: "{{ expanso_releases_dir }}/{{ expanso_edge_version }}/"
+  with:
+    skip_if_exists: "{{ expanso_releases_dir }}/{{ expanso_edge_version }}/expanso-edge"
+
+- !shell
+  name: Make the extracted binary executable
+  cmd: "chmod 0755 {{ expanso_releases_dir }}/{{ expanso_edge_version }}/expanso-edge"
+  with:
+    skip_if_exists: "{{ expanso_install_dir }}/expanso-edge"
+
+# Point /usr/local/bin/expanso-edge at the active version. Only reports
+# "changed" (and so only restarts the service) when the symlink actually moves.
+- !shell
+  name: Activate expanso-edge {{ expanso_edge_version }}
+  cmd: |
+    target="{{ expanso_releases_dir }}/{{ expanso_edge_version }}/expanso-edge"
+    link="{{ expanso_install_dir }}/expanso-edge"
+    current="$(readlink -f "$link" 2>/dev/null || true)"
+    if [ "$current" != "$target" ]; then
+      ln -sfn "$target" "$link"
+      echo CHANGED
+    else
+      echo UNCHANGED
+    fi
+  changed_when: (contains out "CHANGED")
+  and:
+    notify: restart expanso-edge
+
+# --- 4. bootstrap to the control plane --------------------------------------
+# One-time registration. The credentials file is the idempotency marker: once it
+# exists the node is enrolled, so we never re-bootstrap (and never log the token
+# on subsequent runs).
+
+- !shell
+  name: Bootstrap node to Expanso Cloud
+  cmd: "{{ expanso_install_dir }}/expanso-edge bootstrap --token {{ expanso_bootstrap_token }}{{#if expanso_bootstrap_url}} --url {{ expanso_bootstrap_url }}{{/if}}"
+  with:
+    skip_if_exists: "{{ expanso_data_dir }}/auth/credentials.creds"
+  and:
+    notify: restart expanso-edge
+
+# --- 5. service --------------------------------------------------------------
+
+- !template
+  name: Install the systemd unit
+  src: expanso-edge.service.hb
+  dest: /etc/systemd/system/expanso-edge.service
+  attributes:
+    owner: root
+    group: root
+    mode: 0o644
+  and:
+    notify: restart expanso-edge
+
+- !sd_service
+  name: Enable and start expanso-edge
+  service: expanso-edge
+  enabled: true
+  started: true

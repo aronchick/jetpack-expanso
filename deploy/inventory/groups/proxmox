@@ -1,0 +1,5 @@
+# Proxmox cluster API endpoint(s). These are NOT deploy targets -- they're only
+# referenced by the instantiate: block (provision.cluster) to reach the API.
+# No play targets this group, so jetp never SSHes here.
+hosts:
+  - mrow

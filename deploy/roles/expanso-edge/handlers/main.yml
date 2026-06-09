@@ -1,0 +1,8 @@
+# Handlers for the expanso-edge role.
+# Notified by binary activation, bootstrap, and unit-file changes.
+
+- !shell
+  name: reload systemd and restart expanso-edge
+  cmd: systemctl daemon-reload && systemctl restart expanso-edge
+  with:
+    subscribe: restart expanso-edge

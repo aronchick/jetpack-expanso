@@ -1,0 +1,46 @@
+# Role: deploy the Expanso Edge agent (the expanso-edge binary) and register it
+# with an Expanso Cloud control plane.
+#
+# Each node:
+#   - installs the expanso-edge binary from get.expanso.io
+#   - bootstraps to Expanso Cloud with an `exp_bk_...` bootstrap key
+#   - runs `expanso-edge run` as a systemd service
+#
+# Built Jetpack-native (download / unpack / bootstrap / systemd) rather than
+# piping the official get.expanso.io/edge/install.sh through bash.
+#
+# Privilege escalation is controlled by the PLAY, not the role (see tasks).
+
+name: expanso-edge
+
+defaults:
+
+  # ---- release selection ----------------------------------------------------
+  # Channel + version map directly to the artifact layout:
+  #   https://get.expanso.io/releases/edge/<channel>/<version>/expanso-edge_<version>_linux_<arch>.tar.gz
+  expanso_edge_channel: stable
+  expanso_edge_version: v2.1.18
+  expanso_edge_download_base: https://get.expanso.io/releases/edge
+
+  # Auto-detected from `uname -m` at run time; safe fallback here.
+  expanso_arch: amd64
+
+  # ---- install layout -------------------------------------------------------
+  expanso_install_dir: /usr/local/bin             # where the `expanso-edge` symlink lives
+  expanso_releases_dir: /opt/expanso/releases     # versioned extracted binaries
+  expanso_data_dir: /var/lib/expanso/edge         # bootstrap writes creds + config.d here
+
+  # ---- bootstrap / control plane -------------------------------------------
+  # The exp_bk_... bootstrap key. SECRET -- set it in the gitignored
+  # group_vars/edge.yml (NOT here). One key bootstraps many nodes.
+  expanso_bootstrap_token: ""
+
+  # Optional explicit control-plane URL. Empty = let the token resolve it
+  # (the default Expanso Cloud endpoint encoded by the bootstrap service).
+  expanso_bootstrap_url: ""
+
+tasks:
+  - main.yml
+
+handlers:
+  - main.yml

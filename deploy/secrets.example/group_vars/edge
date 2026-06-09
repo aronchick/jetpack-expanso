@@ -1,0 +1,13 @@
+# Secret overlay for the `edge` group. Copy this tree to deploy/secrets/
+# (gitignored) and fill in real values, then pass it as a second inventory:
+#
+#   jetp ssh --playbook deploy/playbooks/dragonfly.yml \
+#            --inventory deploy/inventory --inventory deploy/secrets \
+#            --roles deploy/roles
+#
+# Jetpack merges inventories in order, so these secret vars overlay onto the
+# `edge` group defined in deploy/inventory -- no secrets live in the committed tree.
+
+# Expanso Cloud bootstrap key (exp_bk_...). One key bootstraps every edge node.
+# Get one from https://cloud.expanso.io -> Nodes -> Add Node.
+expanso_bootstrap_token: "exp_bk_CHANGE_ME"

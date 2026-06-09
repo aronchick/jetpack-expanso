@@ -1,0 +1,11 @@
+# OS / editor
+.DS_Store
+
+# AI helpers
+.claude
+.mcp.json
+
+# Secrets: real values + the local overlay inventory.
+# Copy deploy/secrets.example -> deploy/secrets and fill it in.
+.env
+deploy/secrets/

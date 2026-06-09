@@ -1,0 +1,13 @@
+# Secret overlay for the `mrow` Proxmox cluster host. Copy this tree to
+# deploy/secrets/ (gitignored) and fill in real values. The LXC provisioner
+# reads these to reach the Proxmox API when the instantiate: block runs.
+#
+# Token auth (recommended) -- Datacenter > Permissions > API Tokens:
+# proxmox_api_token_id: "root@pam!jetpack"
+# proxmox_api_token_secret: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+#
+# Password auth (fallback):
+proxmox_api_host: 10.7.1.201
+proxmox_api_user: root@pam
+proxmox_api_password: "CHANGE_ME"
+proxmox_node: mrow

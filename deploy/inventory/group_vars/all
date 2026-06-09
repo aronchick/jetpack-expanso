@@ -1,0 +1,16 @@
+# Fleet-wide settings.
+
+# Expanso Edge release to deploy. Bump to roll out an upgrade -- the symlink
+# activation step restarts each node onto the new version.
+expanso_edge_channel: stable
+expanso_edge_version: v2.1.18
+
+# --- Proxmox provisioning (used by playbooks/dragonfly.yml) -----------------
+
+# Public SSH key injected into each new container's root account so jetp can
+# connect after provisioning. This is the operator key on this machine.
+proxmox_authorized_keys: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBEIgcSX7O9JXe5Y74p1CF31F2yNkh/jl7CMXADo50Dv wings@jeff"
+
+# LXC base image. Confirmed present on moosefs via the storage content API
+# (equivalent of `pveam list moosefs`) on 2026-06-08.
+proxmox_ostemplate: "moosefs:vztmpl/debian-13-standard_13.1-2_amd64.tar.zst"

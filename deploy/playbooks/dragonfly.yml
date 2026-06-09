@@ -1,0 +1,45 @@
+# Dragonfly: provision a 5-node Expanso Edge fleet on Proxmox (node `mrow`,
+# moosefs storage, Debian 13 LXC, DHCP) and deploy onto it in a single run.
+#
+#   jetp ssh --playbook deploy/playbooks/dragonfly.yml \
+#            --inventory deploy/inventory --inventory deploy/secrets --roles deploy/roles
+#
+# Secrets live in a separate overlay inventory (deploy/secrets, gitignored);
+# Jetpack merges inventories in order so its vars land on the matching group/host.
+# Copy deploy/secrets.example -> deploy/secrets and fill in the Proxmox creds
+# (host_vars/mrow) and the Expanso bootstrap key (group_vars/edge).
+#
+# The instantiate: block creates the containers (idempotent by hostname -- safe
+# to re-run), the LXC provisioner discovers each DHCP lease and sets it as the
+# SSH target, then the expanso-edge role installs the agent, bootstraps each node
+# to Expanso Cloud, and starts it.
+#
+# We connect to the provisioned containers as root (ssh_user: root below), so no
+# sudo is needed -- and the minimal Debian LXC template has no `sudo` binary.
+#
+# Note: instantiate's inventory_path resolves relative to THIS playbook's dir.
+
+- name: Provision and deploy Expanso Edge nodes
+  groups:
+    - edge
+  instantiate:
+    inventory_path: ../inventory
+    pattern: expanso-edge-{01..05}
+    nodes:
+      - mrow
+    provision:
+      type: proxmox_lxc
+      cluster: mrow
+      ostemplate: "{{ proxmox_ostemplate }}"
+      storage: moosefs
+      rootfs_size: "20"
+      memory: "4096"
+      cores: "2"
+      unprivileged: "1"
+      start_on_create: "1"
+      features: nesting=1
+      ssh_user: root
+      authorized_keys: "{{ proxmox_authorized_keys }}"
+      net0: name=eth0,bridge=vmbr0,ip=dhcp
+  roles:
+    - role: expanso-edge

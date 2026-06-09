@@ -1,0 +1,6 @@
+hosts:
+- expanso-edge-01
+- expanso-edge-02
+- expanso-edge-03
+- expanso-edge-04
+- expanso-edge-05
