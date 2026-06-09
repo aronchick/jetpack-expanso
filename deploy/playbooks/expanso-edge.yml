@@ -1,0 +1,23 @@
+# Deploy the Expanso Edge agent to the `edge` fleet.
+#
+# Provision-agnostic: this play never mentions a hypervisor. Each host comes into
+# being from its own `provision:` block in inventory (proxmox_lxc today, proxmox_vm
+# or none/pre-existing later) -- swapping target is an inventory edit, not a play
+# change. Hosts without a provision block are just connected to directly.
+#
+#   jetp ssh --playbook deploy/playbooks/expanso-edge.yml \
+#            --inventory deploy/inventory --inventory deploy/secrets \
+#            --roles deploy/roles
+#
+# Secrets (Proxmox creds for any provisioning, Expanso bootstrap key) come from
+# the gitignored deploy/secrets overlay -- see deploy/secrets.example.
+#
+# No sudo here: the provisioned hosts are reached as root, and the role works on
+# minimal images without a sudo binary. For pre-existing non-root targets, add
+# `sudo: root` to this play.
+
+- name: Deploy Expanso Edge
+  groups:
+    - edge
+  roles:
+    - role: expanso-edge

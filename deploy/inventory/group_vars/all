@@ -5,7 +5,7 @@
 expanso_edge_channel: stable
 expanso_edge_version: v2.1.18
 
-# --- Proxmox provisioning (used by playbooks/dragonfly.yml) -----------------
+# --- Proxmox LXC provisioning (one recipe; see provision-proxmox-lxc.yml) ----
 
 # Public SSH key injected into each new container's root account so jetp can
 # connect after provisioning. This is the operator key on this machine.

@@ -1,0 +1,40 @@
+# Recipe: scaffold a fleet of Proxmox LXC hosts for the `edge` group.
+#
+# This is ONE way to bring hosts into being -- it writes a per-host `provision:`
+# block into the inventory (so each host then self-provisions) and stands up the
+# containers. It is NOT the deployment; once the fleet exists, deploy with the
+# provision-agnostic expanso-edge.yml. For VMs, a different hypervisor, a cloud,
+# or bare metal, write a different recipe (or hand-author host_vars) -- the role
+# and the deploy play are unchanged.
+#
+#   jetp ssh --playbook deploy/playbooks/provision-proxmox-lxc.yml \
+#            --inventory deploy/inventory --inventory deploy/secrets \
+#            --roles deploy/roles
+#
+# (This particular recipe targets a Proxmox node `mrow` with moosefs storage and
+#  DHCP -- environment specifics live in inventory + the secrets overlay.)
+
+- name: Provision Expanso Edge hosts on Proxmox LXC
+  groups:
+    - edge
+  instantiate:
+    inventory_path: ../inventory
+    pattern: expanso-edge-{01..05}
+    nodes:
+      - mrow
+    provision:
+      type: proxmox_lxc
+      cluster: mrow
+      ostemplate: "{{ proxmox_ostemplate }}"
+      storage: moosefs
+      rootfs_size: "20"
+      memory: "4096"
+      cores: "2"
+      unprivileged: "1"
+      start_on_create: "1"
+      features: nesting=1
+      ssh_user: root
+      authorized_keys: "{{ proxmox_authorized_keys }}"
+      net0: name=eth0,bridge=vmbr0,ip=dhcp
+  roles:
+    - role: expanso-edge

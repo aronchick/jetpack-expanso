@@ -1,7 +1,7 @@
 # Secret overlay for the `edge` group. Copy this tree to deploy/secrets/
 # (gitignored) and fill in real values, then pass it as a second inventory:
 #
-#   jetp ssh --playbook deploy/playbooks/dragonfly.yml \
+#   jetp ssh --playbook deploy/playbooks/expanso-edge.yml \
 #            --inventory deploy/inventory --inventory deploy/secrets \
 #            --roles deploy/roles
 #
