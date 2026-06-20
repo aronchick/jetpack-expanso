@@ -1,0 +1,28 @@
+name: Check
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+env:
+  JETPACK_REPO: https://github.com/riffcc/jetpack
+  JETPACK_REF: main
+
+jobs:
+  jetpack:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Clone Jetpack
+        run: git clone --depth 1 --branch "$JETPACK_REF" "$JETPACK_REPO" /tmp/jetpack
+
+      - name: Build Jetpack
+        run: cargo build --locked --bin jetpack
+        working-directory: /tmp/jetpack
+
+      - name: Validate
+        run: JETPACK_BIN=/tmp/jetpack/target/debug/jetpack ./scripts/check.sh
