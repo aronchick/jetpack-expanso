@@ -1,0 +1,5 @@
+# Single-node demo defaults.
+#
+# Override these values if the demo should track a different release.
+expanso_edge_channel: stable
+expanso_edge_version: v2.1.18

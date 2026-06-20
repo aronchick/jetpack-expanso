@@ -1,0 +1,6 @@
+# Replace these values with a Debian, Ubuntu, or EL host reachable from the
+# machine running Jetpack.
+hostname: demo-edge-01
+jet_ssh_hostname: CHANGE_ME
+jet_ssh_user: root
+jet_ssh_port: 22
