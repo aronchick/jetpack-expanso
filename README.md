@@ -52,6 +52,11 @@ it writes the per-host `provision:` blocks and creates the containers. To target
 VMs or bare metal instead, change the `provision:` blocks (or drop them); the
 role and `expanso-edge.yml` don't change.
 
+For a local macOS VM lab, see [Local Virtualization With
+Lima](docs/local-virtualization-lima.md). It shows how to install Lima, create
+five Ubuntu VMs, add a gitignored Jetpack SSH overlay, and run the same
+`expanso-edge.yml` deploy playbook against those VMs.
+
 Re-runs are idempotent: existing hosts are reused, the agent restarts only when
 the version actually changes, and a node is bootstrapped exactly once (its
 credentials file is the guard).

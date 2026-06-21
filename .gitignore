@@ -8,4 +8,5 @@
 # Secrets: real values + the local overlay inventory.
 # Copy deploy/secrets.example -> deploy/secrets and fill it in.
 .env
+.local/
 deploy/secrets/
